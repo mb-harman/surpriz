@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sürpriz Giriş Ekranı</title>
+  <style>
+    /* GENEL BİÇİMLENDİRME */
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --border-color: #ddd;
+    }
+
+    body.dark-mode {
+      --bg-color: #1a1a2e;
+      --card-bg: #16213e;
+      --text-color: #e94560;
+      --accent-color: #0f3460;
+      --border-color: #0f3460;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      transition: all 0.4s ease;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      max-width: 650px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* GÜVENLİK EKRANI */
+    .warning-banner {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #e74c3c;
+      margin-bottom: 20px;
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.2; }
+      100% { opacity: 1; }
+    }
+
+    input[type="text"], input[type="number"], select {
+      padding: 10px 15px;
+      font-size: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      margin-right: 10px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    /* KELİME YARIŞMASI ALANI */
+    #game-screen {
+      display: none;
+    }
+
+    .question-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 20px 0;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .word-letters {
+      display: flex;
+      gap: 6px;
+      font-family: monospace;
+      font-size: 1.5rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    .letter-box {
+      border-bottom: 3px solid var(--text-color);
+      width: 25px;
+      text-align: center;
+      min-height: 30px;
+    }
+
+    .question-box {
+      text-align: right;
+      max-width: 50%;
+    }
+
+    .question-title {
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+    }
+
+    /* TEMA SLIDER */
+    #theme-slider-container {
+      display: none;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input { display: none; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px; width: 26px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="security-screen">
+      <div class="warning-banner">
+        HOOP HEMŞEHRİM NEREYE! GİRİŞ YASAK! ORADA DUR BAKALIM!
+      </div>
+      <p>Devam etmek için güvenlik sorusunu yanıtla:</p>
+      <p><strong>Güvenlik Sordusu: En sevdiğimiz ortak yemek nedir?</strong></p>
+      <input type="text" id="security-input" placeholder="Cevabı yazın...">
+      <button onclick="checkSecurity()">Giriş Yap</button>
+      <p id="security-error" style="color: red; display: none; margin-top: 10px;">Hatalı cevap, geçemezsin!</p>
+    </div>
+
+    <div id="game-screen">
+      <h2>Soru Alanı ve Gizli Kelimeler</h2>
+      <p>Soruları doğru yanıtladıkça harfler açılacak!</p>
+
+      <div class="question-row">
+        <div class="word-letters" id="word-1">
+          <span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span>
+        </div>
+        <div class="question-box">
+          <div class="question-title">1. İlk tanıştığımız yıl hangisidir? (Sayı)</div>
+          <input type="number" id="ans-1" placeholder="Yıl">
+          <button onclick="checkAnswer(1, '2020', 'DOĞUM')">Kontrol</button>
+        </div>
+      </div>
+
+      <div class="question-row">
+        <div class="word-letters" id="word-2">
+          <span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span>
+        </div>
+        <div class="question-box">
+          <div class="question-title">2. En çok gittiğimiz mekan? (Şıklı)</div>
+          <select id="ans-2">
+            <option value="">Seçiniz...</option>
+            <option value="Kütüphane">Kütüphane</option>
+            <option value="Kafeterya">Kafeterya</option>
+            <option value="Park">Park</option>
+          </select>
+          <button onclick="checkAnswer(2, 'Kafeterya', 'GÜNÜN')">Kontrol</button>
+        </div>
+      </div>
+
+      <div class="question-row">
+        <div class="word-letters" id="word-3">
+          <span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span>
+        </div>
+        <div class="question-box">
+          <div class="question-title">3. Aramızdaki en meşhur espri kelimesi nedir?</div>
+          <input type="text" id="ans-3" placeholder="Kelime">
+          <button onclick="checkAnswer(3, 'hemşehri', 'KUTLU')">Kontrol</button>
+        </div>
+      </div>
+
+      <div class="question-row">
+        <div class="word-letters" id="word-4">
+          <span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span>
+        </div>
+        <div class="question-box">
+          <div class="question-title">4. Dünyanın en iyi rengi hangisidir?</div>
+          <input type="text" id="ans-4" placeholder="Renk">
+          <button onclick="checkAnswer(4, 'mavi', 'OLSUN')">Kontrol</button>
+        </div>
+      </div>
+
+      <div class="question-row">
+        <div class="word-letters" id="word-5">
+          <span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span><span class="letter-box">_</span>
+        </div>
+        <div class="question-box">
+          <div class="question-title">5. Doğum günü çocuğunun adı?</div>
+          <input type="text" id="ans-5" placeholder="İsim">
+          <button onclick="checkAnswer(5, 'melih', 'MELİH')">Kontrol</button>
+        </div>
+      </div>
+
+      <div id="theme-slider-container">
+        <h3>Tebrikler! Bütün soruları bildin! 🎉</h3>
+        <p>Aşağıdaki şalteri çevirerek karanlık moda geçiş yapabilirsin:</p>
+        <label class="switch">
+          <input type="checkbox" id="theme-toggle" onchange="toggleDarkMode()">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Güvenlik Sorusu Kontrolü
+    function checkSecurity() {
+      const input = document.getElementById('security-input').value.trim().toLowerCase();
+      // Buraya doğru güvenlik cevabını yazabilirsin (küçük harflerle):
+      const correctAnswer = "iskender"; 
+
+      if (input === correctAnswer) {
+        document.getElementById('security-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+      } else {
+        document.getElementById('security-error').style.display = 'block';
+      }
+    }
+
+    let solvedCount = 0;
+
+    // Soru Cevaplarını ve Harfleri Açma Fonksiyonu
+    function checkAnswer(rowNumber, correctAnswer, targetWord) {
+      const inputElement = document.getElementById(`ans-${rowNumber}`);
+      const userAnswer = inputElement.value.trim().toLowerCase();
+
+      if (userAnswer === correctAnswer.toLowerCase()) {
+        // Doğru bildiyse harfleri ekrana yazdır
+        const wordContainer = document.getElementById(`word-${rowNumber}`);
+        wordContainer.innerHTML = ''; // Çizgileri temizle
+
+        for (let char of targetWord) {
+          const span = document.createElement('span');
+          span.className = 'letter-box';
+          span.style.borderBottom = 'none';
+          span.innerText = char;
+          wordContainer.appendChild(span);
+        }
+
+        // İlgili soruyu ve butonu pasif yap
+        inputElement.disabled = true;
+        
+        solvedCount++;
+        if (solvedCount === 5) {
+          document.getElementById('theme-slider-container').style.display = 'block';
+        }
+      } else {
+        alert("Yanlış cevap! Tekrar dene bakalım.");
+      }
+    }
+
+    // Karanlık Mod Geçişi
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+  </script>
+</body>
+</html>
